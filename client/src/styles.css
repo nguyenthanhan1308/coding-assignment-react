@@ -1,1 +1,127 @@
 /* You can add global styles to this file, and also import other style files */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    /* 1. Set global box model */
+}
+
+body {
+    margin: 0;
+    /* 2. Remove default body margin */
+    line-height: 1.5;
+    /* 3. Improve line spacing */
+    -webkit-font-smoothing: antialiased;
+    /* 4. Enhance font rendering */
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+    display: block;
+    max-width: 100%;
+    /* 5. Make media elements responsive by default */
+}
+
+input,
+button,
+textarea,
+select {
+    font: inherit;
+    /* 6. Inherit fonts for form controls */
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    overflow-wrap: break-word;
+    margin: 0;
+    /* 7. Prevent text overflows */
+}
+
+#root,
+#__next {
+    isolation: isolate;
+    /* 8. Create a stacking context for app root */
+}
+
+/* Optional: Improve text wrapping on headings */
+h1,
+h2,
+h3 {
+    text-wrap: balance;
+}
+
+/* Optional: Constrain line lengths for readability */
+p,
+li,
+figcaption {
+    max-width: 70ch;
+}
+
+:root {
+    --hover-color: #DFEFFF;
+    --background-light: #f0f2f4;
+    --border-bottom-color: #0000004d;
+    --border: #000000b0;
+    --list-box-shadow: 2px 2px 4px #00000042;
+    background-color: var(--background-light);
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-col {
+    flex-direction: column;
+}
+
+.h-full {
+    height: 100%
+}
+
+.w-full {
+    width: 100%;
+}
+
+.align-center {
+    align-items: center;
+}
+
+.content-center {
+    justify-content: center;
+}
+
+.content-between {
+    justify-content: space-between;
+}
+
+.content-end {
+    justify-content: flex-end;
+}
+
+.mgr-8 {
+    margin-right: 8px;
+}
+
+.mgr-1rem {
+    margin-right: 1rem;
+}
+
+.mgb-8 {
+    margin-bottom: 8px;
+}
+
+.opacity-70 {
+    opacity: 0.7;
+}
+
+.w-20cqw {
+    width: 20cqw;
+}
