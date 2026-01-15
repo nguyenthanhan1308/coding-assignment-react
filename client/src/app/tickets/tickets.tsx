@@ -1,27 +1,23 @@
-import { useReducer } from "react";
+import { useReducer, useEffect, useState } from "react";
 import { Ticket, User } from "@acme/shared-models";
 import styles from "./tickets.module.css";
 import { Add } from "@mui/icons-material";
 import { Button, Chip, Skeleton } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 export interface TicketsProps {
-	tickets: Ticket[];
 	users: User[];
 	loading: boolean;
 }
 
-type Filter = "All Tickets" | "Complete" | "Uncomplete" | "Assigned" | "Unassigned";;
+type Filter = "All Tickets" | "Complete" | "Ongoing" | "Assigned" | "Unassigned";
 
 interface TicketState {
 	page: number;
 	skip: number;
-	filter: Filter
+	filter: Filter;
 }
 
-function reducer(
-	state: TicketState,
-	action: { type: string; nextFilter?: Filter }
-): TicketState {
+function reducer(state: TicketState, action: { type: string; nextFilter?: Filter }): TicketState {
 	const { page } = state;
 	switch (action.type) {
 		case "NEXT_PAGE":
@@ -37,7 +33,7 @@ function reducer(
 			return state;
 	}
 }
-const filterList: Filter[] = ["All Tickets", "Complete", "Uncomplete", "Assigned", "Unassigned"];
+const filterList: Filter[] = ["All Tickets", "Complete", "Ongoing", "Assigned", "Unassigned"];
 
 export function Tickets(props: TicketsProps) {
 	const navigate = useNavigate();
@@ -46,6 +42,8 @@ export function Tickets(props: TicketsProps) {
 		skip: 10,
 		filter: "All Tickets",
 	});
+	const [tickets, setTickets] = useState([] as Ticket[]);
+	const [ticketLoading, setTicketLoading] = useState(false);
 	function onCardClick(ticketID: number) {
 		navigate(`/detail/${ticketID}`);
 	}
@@ -70,32 +68,58 @@ export function Tickets(props: TicketsProps) {
 	}
 
 	function onChangeFilter(status: Filter): void {
-		dispatch({type: "CHANGE_FILTER", nextFilter: status})
+		dispatch({ type: "CHANGE_FILTER", nextFilter: status });
 	}
 
-	function filterTicket () {
-		let filteredTickets = props.tickets.slice(pageFirst - 1, pageLast);
-		switch(state.filter) {
+	function filterTicket() {
+		// reverse tickets list so new ticket showing on top of the list
+		let filteredTickets = Array.from(tickets);
+		filteredTickets.reverse().slice(pageFirst - 1, pageLast);
+		switch (state.filter) {
 			case "Assigned":
-				filteredTickets = filteredTickets.filter(p => p.assigneeId !== undefined);
+				filteredTickets = filteredTickets.filter(p => p.assigneeId !== null);
 				break;
 			case "Unassigned":
-				filteredTickets = filteredTickets.filter(p => p.assigneeId === undefined);
+				filteredTickets = filteredTickets.filter(p => p.assigneeId === null);
 				break;
 			case "Complete":
 				filteredTickets = filteredTickets.filter(p => p.completed === true);
 				break;
-			case "Uncomplete":
+			case "Ongoing":
 				filteredTickets = filteredTickets.filter(p => p.completed === false);
 				break;
 			default:
 				break;
 		}
-		return filteredTickets
+		return filteredTickets;
 	}
+
+	useEffect(() => {
+		let didCancel = false;
+		setTicketLoading(true);
+		function fetchTickets() {
+			fetch("/api/tickets")
+				.then(res => res.json())
+				.then(json => {
+					if (!didCancel) {
+						setTickets(json);
+					}
+				})
+				.then(() => {
+					if (!didCancel) {
+						setTicketLoading(false);
+					}
+				});
+		}
+		fetchTickets();
+		return () => {
+			didCancel = true;
+		};
+	}, [])
 
 	const pageFirst = filterTicket()?.length === 0 ? 0 : state.page * state.skip + 1;
 	const pageLast = Math.min((state.page + 1) * state.skip, filterTicket()?.length);
+
 	return (
 		<div className="flex flex-col content-between">
 			<div className={styles["ticket-header"]}>
@@ -106,9 +130,10 @@ export function Tickets(props: TicketsProps) {
 				<div className={styles["ticket-create-button"]}>
 					<Button
 						style={{
-							marginBottom: 16,
+							marginBottom: "1rem",
 							textTransform: "capitalize",
 						}}
+						fullWidth
 						variant="contained"
 						startIcon={<Add />}
 						onClick={onCreateTicket}
@@ -122,7 +147,8 @@ export function Tickets(props: TicketsProps) {
 					return (
 						<Chip
 							sx={{
-								marginRight: "0.5rem"
+								marginRight: "0.5rem",
+								marginBottom: "0.5rem",
 							}}
 							clickable={true}
 							color={state.filter === status ? "primary" : "default"}
@@ -132,7 +158,7 @@ export function Tickets(props: TicketsProps) {
 					);
 				})}
 			</div>
-			{props.loading ? (
+			{props.loading || ticketLoading ? (
 				<Skeleton
 					height={300}
 					variant="rounded"
@@ -140,10 +166,10 @@ export function Tickets(props: TicketsProps) {
 			) : (
 				<div className={styles["ticket-list"]}>
 					<div className={styles["ticket-list-header"]}>
-						<p className="w-20cqw mgr-1rem">ID</p>
-						<p className="w-20cqw">Detail</p>
+						<p className="w-25cqw mgr-1rem">ID</p>
+						<p>Detail</p>
 					</div>
-					{props.tickets ? (
+					{tickets ? (
 						filterTicket()?.map(t => {
 							let userName: string | undefined = "";
 							if (props.users) {
@@ -168,7 +194,10 @@ export function Tickets(props: TicketsProps) {
 											<Chip
 												size="small"
 												color={t.completed ? "success" : "info"}
-												label={t.completed ? "Complete" : "Uncomplete"}
+												label={t.completed ? "Complete" : "Ongoing"}
+												style={{
+													marginRight: "0.5rem",
+												}}
 											/>
 											{t.assigneeId === null && (
 												<Chip
@@ -200,7 +229,7 @@ export function Tickets(props: TicketsProps) {
 								style={{ textTransform: "capitalize" }}
 								variant="outlined"
 								size="small"
-								disabled={Math.round(filterTicket()?.length / state.skip) === state.page}
+								disabled={Math.floor(filterTicket()?.length / state.skip) === state.page}
 								onClick={onNextPage}
 							>
 								Next

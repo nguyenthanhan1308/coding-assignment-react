@@ -6,7 +6,6 @@ import styles from "./app.module.css";
 import Tickets from "./tickets/tickets";
 import TicketDetails from "./ticket-details/ticket-details";
 const App = () => {
-	const [tickets, setTickets] = useState([] as Ticket[]);
 	const [users, setUsers] = useState([] as User[]);
 	const [loading, setLoading] = useState(false);
 
@@ -15,19 +14,6 @@ const App = () => {
 	useEffect(() => {
 		let didCancel = false;
 		setLoading(true);
-		function fetchTickets() {
-			fetch("/api/tickets")
-				.then(res => res.json())
-				.then(json => {
-					if (!didCancel) {
-						setTickets(json);
-					}
-				}).then(() => {
-					if (!didCancel) {
-						setLoading(false);
-					}
-				});
-		}
 
 		function fetchUsers() {
 			fetch("/api/users")
@@ -35,11 +21,11 @@ const App = () => {
 				.then(json => {
 					if (!didCancel) {
 						setUsers(json);
+						setLoading(false);
 					}
 				});
 		}
 
-		fetchTickets();
 		fetchUsers();
 		return () => {
 			didCancel = true;
@@ -52,7 +38,6 @@ const App = () => {
 					path="/"
 					element={
 						<Tickets
-							tickets={tickets}
 							users={users}
 							loading={loading}
 						/>
@@ -60,9 +45,19 @@ const App = () => {
 				/>
 				{/* Hint: Try `npx nx g component TicketDetails --project=client --no-export` to generate this component  */}
 				<Route
-					path="/detail/:id"
-					element={<TicketDetails />}
-				/>
+					path="/detail"
+					element={
+						<TicketDetails
+							users={users}
+						/>
+					}
+				>
+					<Route path=":id" element={
+						<TicketDetails
+							users={users}
+						/>
+					}/>
+				</Route>
 			</Routes>
 		</div>
 	);
