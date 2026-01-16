@@ -12,7 +12,7 @@ The most important part of the interview will come after this one, when we look 
 decisions you have made, etc..
 
 ## Total hours spent: 4
-1. Analyze (0.5 hours)
+1. Analyze (1 hours)
   - Read the requirement and list needed features
   - Choose design and colors
 2. Coding (2.5 hours)
